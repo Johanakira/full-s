@@ -1,0 +1,73 @@
+const socket = io();
+
+const menuView = document.getElementById('menuView');
+const localGameView = document.getElementById('localGameView');
+const onlineLobbyView = document.getElementById('onlineLobbyView');
+const matchmakingMessage = document.getElementById('matchmakingMessage');
+
+document.getElementById('startButton').addEventListener('click', () => {
+  switchView(menuView, localGameView);
+  startLocalGame();
+});
+
+document.getElementById('multiplayerButton').addEventListener('click', () => {
+  switchView(menuView, onlineLobbyView);
+  matchmakingMessage.textContent = "Connecting...";
+});
+
+document.getElementById('cancelMatchmakingButton').addEventListener('click', () => {
+  socket.disconnect(); // cancel connection
+  location.reload(); // simple reset
+});
+
+document.getElementById('backToMenuButtonLocal').addEventListener('click', () => {
+  switchView(localGameView, menuView);
+});
+
+document.getElementById('backToMenuButtonOnline').addEventListener('click', () => {
+  socket.disconnect();
+  location.reload();
+});
+
+function switchView(from, to) {
+  from.classList.remove('active');
+  to.classList.add('active');
+}
+
+// Multiplayer socket events
+socket.on('waiting', () => {
+  matchmakingMessage.textContent = "Waiting for opponent...";
+});
+
+socket.on('match-found', ({ room }) => {
+  matchmakingMessage.textContent = `Match found! Joining ${room}...`;
+});
+
+socket.on('game-start', ({ mark, opponentId }) => {
+  matchmakingMessage.textContent = `Game started! You are ${mark}`;
+  // You could add logic to load the multiplayer board here
+});
+
+// Optional: Handle disconnection
+socket.on('disconnect', () => {
+  console.log("Disconnected from server");
+});
+
+// Simple local game setup
+function startLocalGame() {
+  const grid = document.getElementById('localGameGrid');
+  grid.innerHTML = '';
+  let currentPlayer = 'X';
+
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    cell.addEventListener('click', () => {
+      if (cell.textContent === '') {
+        cell.textContent = currentPlayer;
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      }
+    });
+    grid.appendChild(cell);
+  }
+}
